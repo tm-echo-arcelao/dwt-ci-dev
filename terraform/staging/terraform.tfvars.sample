@@ -1,0 +1,52 @@
+# Global Config
+# locals.tf, providers.tf
+region      = "us-west-2"
+tag_creator = "TM"
+profile     = "staging-account"
+environment = "staging"
+
+# VPC
+# vpc.tf
+# Note: at least 2 AZS are needed to create an RDS database
+vpc_name             = "dwh-vpc"
+vpc_cidr             = "172.31.0.0/16"
+vpc_azs              = ["us-west-2a", "us-west-2b"]
+vpc_public_subnets   = ["172.31.0.0/24"]
+vpc_private_subnets  = ["172.31.10.0/24"]
+vpc_database_subnets = ["172.31.20.0/24", "172.31.21.0/24"]
+enable_flow_log      = true
+enable_nat_gateway   = true
+
+# S3 Buckets
+# s3.tf
+bucket_name           = "dwh-s3-bucket"
+flow_logs_bucket_name = "dwh-s3-flow-logs"
+
+# Virtual Machines
+# ec2.tf
+vm_name       = "dwh-vm"
+instance_type = "t3.small"
+user_data     = <<-EOF
+    #!/bin/bash
+    sudo apt-get -y update
+    sudo apt install -y postgresql-client-common
+    sudo apt-get install -y postgresql-client
+  EOF
+
+# RDS
+# rds.tf
+identifier                = "dwh-rds"
+instance_class            = "db.t3.small"
+port                      = 5432
+db_name                   = "db_name"
+db_username               = "db_user"
+db_password               = "db_password"
+engine                    = "postgres"
+engine_version            = "15.4"
+family                    = "postgres15"
+allocated_storage         = 20
+max_allocated_storage     = 100
+storage_encrypted         = false
+deletion_protection       = false
+skip_final_snapshot       = true
+final_snapshot_identifier = "dwh-rds-snapshot"
