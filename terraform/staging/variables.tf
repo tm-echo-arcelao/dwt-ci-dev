@@ -157,3 +157,20 @@ variable "ec2_tag_filter" {
     value = string
   })
 }
+
+variable "pipeline_name" {
+  type = string
+}
+
+variable "github_connection_name" {
+  type = string
+}
+
+variable "github_repo_id" {
+  type = string
+}
+
+variable "github_repo_branch" {
+  type = string
+  default = "main"
+}
