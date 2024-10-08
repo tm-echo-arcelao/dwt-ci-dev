@@ -1,0 +1,86 @@
+version: "3.7"
+
+services:
+  # This service runs the gRPC server that loads your user code, in both dagit
+  # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
+  # run launcher to use this same image when launching runs in a new container as well.
+  # Multiple containers like this can be deployed separately - each just needs to run on
+  # its own port and have its own entry in the workspace.yaml file that's loaded by dagit.
+  dagster-pipelines:
+    build:
+      context: ..
+      dockerfile: ci/Dockerfile-pipelines
+    container_name: dagster-pipelines
+    networks:
+      - dagster-network
+    restart: always
+    environment:
+      DAGSTER_POSTGRES_HOSTNAME: "${DAGSTER_POSTGRES_HOSTNAME}"
+      DAGSTER_POSTGRES_USERNAME: "${DAGSTER_POSTGRES_USERNAME}"
+      DAGSTER_POSTGRES_PASSWORD: "${DAGSTER_POSTGRES_PASSWORD}"
+      DAGSTER_POSTGRES_DB_NAME: "${DAGSTER_POSTGRES_DB_NAME}"
+    env_file:
+      - dagster.env
+
+  # This service runs dagit, which loads the pipelines from the user code container.
+  # Since our instance uses the QueuedRunCoordinator, any runs submitted from dagit will be put on
+  # a queue and later dequeued and launched by dagster-daemon.
+  dagster-dagit:
+    build:
+      context: ..
+      dockerfile: ci/Dockerfile-dagit
+    entrypoint:
+      - dagit
+      - -h
+      - "0.0.0.0"
+      - -p
+      - "3000"
+      - -w
+      - workspace.yaml
+    container_name: dagster-dagit
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    networks:
+      - dagster-network
+    restart: always
+    environment:
+      DAGSTER_POSTGRES_HOSTNAME: "${DAGSTER_POSTGRES_HOSTNAME}"
+      DAGSTER_POSTGRES_USERNAME: "${DAGSTER_POSTGRES_USERNAME}"
+      DAGSTER_POSTGRES_PASSWORD: "${DAGSTER_POSTGRES_PASSWORD}"
+      DAGSTER_POSTGRES_DB_NAME: "${DAGSTER_POSTGRES_DB_NAME}"
+    env_file:
+      - dagster.env
+    volumes: # Make docker client accessible so we can terminate containers from dagit
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - dagster-pipelines
+
+  # This service runs the dagster-daemon process, which is responsible for taking runs
+  # off of the queue and launching them, as well as creating runs from schedules or sensors.
+  dagster-daemon:
+    build:
+      context: ..
+      dockerfile: ci/Dockerfile-dagit
+    entrypoint:
+      - dagster-daemon
+      - run
+    container_name: dagster-daemon
+    networks:
+      - dagster-network
+    restart: always
+  # Make sure to set the same environment vars as the dagster_pipelines service
+    environment:
+      DAGSTER_POSTGRES_HOSTNAME: "${DAGSTER_POSTGRES_HOSTNAME}"
+      DAGSTER_POSTGRES_USERNAME: "${DAGSTER_POSTGRES_USERNAME}"
+      DAGSTER_POSTGRES_PASSWORD: "${DAGSTER_POSTGRES_PASSWORD}"
+      DAGSTER_POSTGRES_DB_NAME: "${DAGSTER_POSTGRES_DB_NAME}"
+    volumes: # Make docker client accessible so we can launch containers using host docker
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - dagster-pipelines
+
+networks:
+  dagster-network:
+    name: dagster-network
