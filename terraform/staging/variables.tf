@@ -140,3 +140,20 @@ variable "final_snapshot_identifier" {
   type        = string
   default     = "snapshot"
 }
+
+# CodeDeploy
+variable "app_name" {
+  type = string
+}
+
+variable "deployment_group_name" {
+  type = string
+}
+
+variable "ec2_tag_filter" {
+  type = object({
+    key   = string
+    type  = string
+    value = string
+  })
+}

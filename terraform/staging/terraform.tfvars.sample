@@ -50,3 +50,13 @@ storage_encrypted         = false
 deletion_protection       = false
 skip_final_snapshot       = true
 final_snapshot_identifier = "dwh-rds-snapshot"
+
+# CodeDeploy
+# codedeploy.tf
+app_name = "dwh-codedeploy-app"
+deployment_group_name = "dwh-codedeploy-group"
+ec2_tag_filter = {
+  key = "Name"
+  type = "KEY_AND_VALUE"
+  value = "dwh-vm-staging"
+}
