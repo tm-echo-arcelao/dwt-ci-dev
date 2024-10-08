@@ -141,7 +141,7 @@ variable "final_snapshot_identifier" {
   default     = "snapshot"
 }
 
-# CodeDeploy
+# CodePipeline/CodeDeploy
 variable "app_name" {
   type = string
 }

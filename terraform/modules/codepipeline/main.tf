@@ -20,6 +20,27 @@ resource "aws_iam_policy_attachment" "codepipeline_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AWSCodePipeline_FullAccess"
 }
 
+resource "aws_iam_role_policy" "codepipeline_inline_policy" {
+  name = "codepipeline-inline-policy"
+  role = aws_iam_role.codepipeline_role.name
+  policy = jsonencode(
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+              "codestar-connections:*",
+              "s3:*",
+              "codedeploy:*"
+          ],
+          "Resource": "*"
+        }
+      ]
+    }
+  )
+}
+
 resource "aws_codepipeline" "pipeline" {
   name     = var.pipeline_name
   role_arn = aws_iam_role.codepipeline_role.arn

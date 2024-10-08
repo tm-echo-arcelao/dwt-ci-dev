@@ -43,6 +43,6 @@ resource "aws_iam_role" "codedeploy_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "codedeploy_role_policy_attachment" {
-  role       = var.vm_role_name
+  role       = aws_iam_role.codedeploy_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
